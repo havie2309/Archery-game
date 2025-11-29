@@ -1,4 +1,3 @@
-// MorphSVGPlugin replacement
 const MorphSVGPlugin = {
     pathDataToBezier: function(pathSelector) {
         const path = document.querySelector(pathSelector);
@@ -24,7 +23,6 @@ var cursor = svg.createSVGPoint();
 var arrows = document.querySelector(".arrows");
 var randomAngle = 0;
 
-// Game stats
 var gameStats = {
     score: 0,
     shots: 0,
@@ -60,7 +58,6 @@ var timerInterval = setInterval(function() {
     timerEl.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
 }, 1000);
 
-// End game button
 document.getElementById('end-game-btn').addEventListener('click', endGame);
 
 function endGame() {
@@ -82,7 +79,6 @@ function showSummary() {
     var seconds = elapsed % 60;
     var timeStr = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
     
-    // Update summary stats
     document.getElementById('final-score').textContent = gameStats.score;
     document.getElementById('final-shots').textContent = gameStats.shots;
     document.getElementById('final-time').textContent = timeStr;
@@ -90,7 +86,6 @@ function showSummary() {
     var avgScore = gameStats.shots > 0 ? (gameStats.score / gameStats.shots).toFixed(1) : '0.0';
     document.getElementById('avg-score').textContent = avgScore;
     
-    // Populate shots table
     var tbody = document.getElementById('shots-tbody');
     tbody.innerHTML = '';
     
@@ -107,13 +102,11 @@ function showSummary() {
         tbody.appendChild(row);
     });
     
-    // Show modal
     document.getElementById('summary-modal').classList.add('show');
 }
 
 function closeModal() {
     document.getElementById('summary-modal').classList.remove('show');
-    // Reset game
     clearInterval(timerInterval);
     gameStats = {
         score: 0,
@@ -128,10 +121,8 @@ function closeModal() {
     angleEl.textContent = '--';
     timerEl.textContent = '1:00';
     
-    // Clear arrows
     arrows.innerHTML = '';
     
-    // Restart timer
     timerInterval = setInterval(function() {
         if (gameStats.gameOver) return;
         
@@ -148,17 +139,14 @@ function closeModal() {
         timerEl.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
     }, 1000);
     
-    // Re-enable game controls
     window.addEventListener("mousedown", draw);
 }
 
-// center of target
 var target = {
     x: 900,
     y: 249.5
 };
 
-// target intersection line segment
 var lineSegment = {
     x1: 875,
     y1: 280,
@@ -166,7 +154,6 @@ var lineSegment = {
     y2: 220
 };
 
-// bow rotation point
 var pivot = {
     x: 100,
     y: 250
@@ -177,13 +164,11 @@ aim({
     clientY: 300
 });
 
-// set up start drag event
 window.addEventListener("mousedown", draw);
 
 function draw(e) {
     if (gameStats.gameOver) return;
     
-    // pull back arrow
     randomAngle = (Math.random() * Math.PI * 0.03) - 0.015;
     TweenMax.to(".arrow-angle use", 0.3, {
         opacity: 1
@@ -194,17 +179,14 @@ function draw(e) {
 }
 
 function aim(e) {
-    // get mouse position in relation to svg position and scale
     var point = getMouseSVG(e);
     point.x = Math.min(point.x, pivot.x - 7);
     point.y = Math.max(point.y, pivot.y + 7);
     var dx = point.x - pivot.x;
     var dy = point.y - pivot.y;
-    // Make it more difficult by adding random angle each time
     var angle = Math.atan2(dy, dx) + randomAngle;
     var bowAngle = angle - Math.PI;
     
-    // Store the angle in degrees
     gameStats.lastAngle = Math.round((bowAngle * 180 / Math.PI + 360) % 360);
     angleEl.textContent = gameStats.lastAngle + '°';
     
@@ -247,20 +229,16 @@ function aim(e) {
 var currentShotAngle = 0;
 
 function loose() {
-    // Store angle for this shot
     currentShotAngle = gameStats.lastAngle;
     
-    // release arrow
     window.removeEventListener("mousemove", aim);
     window.removeEventListener("mouseup", loose);
 
-    // Increment shot counter
     gameStats.shots++;
     shotsEl.textContent = gameStats.shots + '/10';
     
-    // Check if max shots reached
     if (gameStats.shots >= MAX_SHOTS) {
-        setTimeout(endGame, 2500); // Wait for animation to finish
+        setTimeout(endGame, 2500); 
     }
 
     TweenMax.to("#bow", 0.4, {
@@ -274,12 +252,10 @@ function loose() {
         },
         ease: Elastic.easeOut
     });
-    // duplicate arrow
     var newArrow = document.createElementNS("http://www.w3.org/2000/svg", "use");
     newArrow.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#arrow");
     arrows.appendChild(newArrow);
     
-    // animate arrow along path
     var path = MorphSVGPlugin.pathDataToBezier("#arc");
     TweenMax.to([newArrow], 0.5, {
         force3D: true,
@@ -303,7 +279,6 @@ function loose() {
 }
 
 function hitTest(tween) {
-    // check for collisions with arrow and target
     var arrow = tween.target[0];
     if (!arrow._gsTransform) return;
     var transform = arrow._gsTransform;
@@ -331,11 +306,9 @@ function hitTest(tween) {
             result = "Bullseye";
         }
         
-        // Update score
         gameStats.score += points;
         scoreEl.textContent = gameStats.score;
         
-        // Record shot in history
         gameStats.shotHistory.push({
             angle: currentShotAngle,
             points: points,
@@ -347,7 +320,6 @@ function hitTest(tween) {
 }
 
 function onMiss() {
-    // Record miss in history
     gameStats.shotHistory.push({
         angle: currentShotAngle,
         points: 0,
@@ -357,7 +329,6 @@ function onMiss() {
 }
 
 function showMessage(selector) {
-    // handle all text animations by providing selector
     TweenMax.killTweensOf(selector);
     TweenMax.killChildTweensOf(selector);
     TweenMax.set(selector, {
@@ -380,14 +351,12 @@ function showMessage(selector) {
 }
 
 function getMouseSVG(e) {
-    // normalize mouse position within svg coordinates
     cursor.x = e.clientX;
     cursor.y = e.clientY;
     return cursor.matrixTransform(svg.getScreenCTM().inverse());
 }
 
 function getIntersection(segment1, segment2) {
-    // find intersection point of two line segments and whether or not the point is on either line segment
     var dx1 = segment1.x2 - segment1.x1;
     var dy1 = segment1.y2 - segment1.y1;
     var dx2 = segment2.x2 - segment2.x1;
